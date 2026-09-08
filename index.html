@@ -12,35 +12,60 @@
       --text-main: #0f172a;
       --text-sub: #64748b;
       --border: #e2e8f0;
-      --accent-yellow: #f59e0b;
-      --accent-green: #10b981;
-      --accent-purple: #8b5cf6;
+      --accent-yellow-bg: #fffbe3;
+      --accent-yellow-border: #f59e0b;
+      --accent-yellow-text: #78350f;
+      --accent-purple-bg: #f3e8ff;
+      --accent-purple-border: #8b5cf6;
+      --accent-purple-text: #581c87;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text-main); padding: 24px; max-width: 800px; margin: 0 auto; }
+    body { background-color: var(--bg-color); color: var(--text-main); padding: 32px 16px; max-width: 900px; margin: 0 auto; }
 
-    header { margin-bottom: 24px; text-align: center; }
-    header h1 { font-size: 1.8rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px; }
-    header p { color: var(--text-sub); font-size: 0.95rem; }
+    header { margin-bottom: 28px; text-align: center; }
+    header h1 { font-size: 2rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px; letter-spacing: -0.5px; }
+    header p { color: var(--text-sub); font-size: 0.95rem; font-weight: 500; }
 
-    .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .card label { display: block; font-size: 0.85rem; color: var(--text-sub); margin-bottom: 8px; font-weight: 600; }
-    .card input { width: 100%; padding: 10px; font-size: 1.1rem; font-weight: 600; border: 1px solid var(--border); border-radius: 8px; outline: none; }
-    .card input:focus { border-color: var(--primary); }
-    
-    .metric-group { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 24px; }
-    .metric-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--border); }
+    /* 상단 4개 카드가 한 줄로 정렬되는 그리드 시스템 */
+    .grid-container { 
+      display: grid; 
+      grid-template-columns: repeat(4, 1fr); 
+      gap: 12px; 
+      margin-bottom: 20px; 
+    }
+
+    @media (max-width: 768px) {
+      .grid-container { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+    .card label { display: block; font-size: 0.8rem; color: var(--text-sub); margin-bottom: 10px; font-weight: 600; white-space: nowrap; }
+    .card input { 
+      width: 100%; 
+      padding: 10px 12px; 
+      font-size: 1.15rem; 
+      font-weight: 700; 
+      border: 1px solid var(--border); 
+      border-radius: 8px; 
+      outline: none; 
+      background-color: #fafafa;
+    }
+    .card input:focus { border-color: var(--primary); background-color: #fff; }
+
+    .metric-group { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+    .metric-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed var(--border); }
     .metric-row:last-child { border-bottom: none; }
-    .metric-label { font-size: 0.95rem; color: var(--text-sub); }
-    .metric-val { font-size: 1rem; font-weight: 600; }
+    .metric-label { font-size: 0.9rem; color: var(--text-sub); font-weight: 500; }
+    .metric-val { font-size: 1.05rem; font-weight: 700; }
 
     .result-box { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .status-card { background: #fffbe3; border: 2px solid var(--accent-yellow); border-radius: 12px; padding: 20px; text-align: center; }
-    .position-card { background: #f3e8ff; border: 2px solid var(--accent-purple); border-radius: 12px; padding: 20px; text-align: center; }
-    .result-title { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
-    .result-value { font-size: 1.3rem; font-weight: 800; }
+    .status-card { background: var(--accent-yellow-bg); border: 2px solid var(--accent-yellow-border); border-radius: 14px; padding: 22px; text-align: center; }
+    .position-card { background: var(--accent-purple-bg); border: 2px solid var(--accent-purple-border); border-radius: 14px; padding: 22px; text-align: center; }
+    .result-title { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
+    .result-value { font-size: 1.4rem; font-weight: 800; }
+    
+    .sync-status { text-align: right; font-size: 0.75rem; color: var(--text-sub); margin-bottom: 8px; }
   </style>
 </head>
 <body>
@@ -50,6 +75,9 @@
     <p>QQQ / 이동평균선 / VIX 기반 매수 포지션 산출</p>
   </header>
 
+  <div class="sync-status" id="syncStatus">데이터 동기화 대기 중...</div>
+
+  <!-- 상단 4개 지표 정렬 영역 -->
   <div class="grid-container">
     <div class="card">
       <label>현재 지수 (QQQ)</label>
@@ -87,15 +115,49 @@
   <div class="result-box">
     <div class="status-card">
       <div class="result-title" style="color: #b45309;">Market Status</div>
-      <div class="result-value" id="marketStatus" style="color: #78350f;">상승</div>
+      <div class="result-value" id="marketStatus" style="color: var(--accent-yellow-text);">상승</div>
     </div>
     <div class="position-card">
       <div class="result-title" style="color: #6b21a8;">Buying Position</div>
-      <div class="result-value" id="buyingPosition" style="color: #581c87;">-</div>
+      <div class="result-value" id="buyingPosition" style="color: var(--accent-purple-text);">-</div>
     </div>
   </div>
 
   <script>
+    // 구글 시트 게시 URL (발급받으신 CSV 주소를 복사해 아래 따옴표 안에 넣으세요)
+    const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTEFLZAFwZsv5s0lsWecsNRJUqKkLYGbLZnAFJPtv0KDN7NB_ErkAzjen7MzdKhw0hGdio5dh9-WVd7/pub?gid=0&single=true&output=csv';
+
+    async function loadGoogleSheetData() {
+      if (!GOOGLE_SHEET_CSV_URL || GOOGLE_SHEET_CSV_URL === 'YOUR_GOOGLE_SHEET_CSV_URL') {
+        document.getElementById('syncStatus').innerText = '※ 구글 시트 URL 미설정 (수동 입력 모드)';
+        calculate();
+        return;
+      }
+
+      try {
+        document.getElementById('syncStatus').innerText = '구글 시트 연동 중...';
+        const response = await fetch(GOOGLE_SHEET_CSV_URL);
+        const data = await response.text();
+        const rows = data.split('\n').map(row => row.split(','));
+
+        // 시트의 A1~D1 또는 첫 행/열 구조에 따라 자동 대입
+        // 구글 시트 1행에 QQQ, MA250, VIX10, High52 순서로 수치가 기재되어 있는 기준
+        if (rows.length > 0) {
+          const firstRow = rows[0];
+          if(firstRow[0]) document.getElementById('price').value = parseFloat(firstRow[0]).toFixed(2);
+          if(firstRow[1]) document.getElementById('ma250').value = parseFloat(firstRow[1]).toFixed(2);
+          if(firstRow[2]) document.getElementById('vix10').value = parseFloat(firstRow[2]).toFixed(2);
+          if(firstRow[3]) document.getElementById('high52').value = parseFloat(firstRow[3]).toFixed(2);
+        }
+
+        document.getElementById('syncStatus').innerText = '최신 구글 시트 동기화 완료';
+        calculate();
+      } catch (error) {
+        document.getElementById('syncStatus').innerText = '연동 실패 (기본값 사용 중)';
+        calculate();
+      }
+    }
+
     function calculate() {
       const price = parseFloat(document.getElementById('price').value) || 0;
       const ma250 = parseFloat(document.getElementById('ma250').value) || 0;
@@ -136,7 +198,7 @@
       document.getElementById('buyingPosition').innerText = position;
     }
 
-    calculate();
+    loadGoogleSheetData();
   </script>
 </body>
 </html>
