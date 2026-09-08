@@ -27,7 +27,6 @@
     header h1 { font-size: 2rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px; letter-spacing: -0.5px; }
     header p { color: var(--text-sub); font-size: 0.95rem; font-weight: 500; }
 
-    /* 상단 4개 카드가 한 줄로 정렬되는 그리드 시스템 */
     .grid-container { 
       display: grid; 
       grid-template-columns: repeat(4, 1fr); 
@@ -77,7 +76,6 @@
 
   <div class="sync-status" id="syncStatus">데이터 동기화 대기 중...</div>
 
-  <!-- 상단 4개 지표 정렬 영역 -->
   <div class="grid-container">
     <div class="card">
       <label>현재 지수 (QQQ)</label>
@@ -124,30 +122,27 @@
   </div>
 
   <script>
-    // 구글 시트 게시 URL (발급받으신 CSV 주소를 복사해 아래 따옴표 안에 넣으세요)
     const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTEFLZAFwZsv5s0lsWecsNRJUqKkLYGbLZnAFJPtv0KDN7NB_ErkAzjen7MzdKhw0hGdio5dh9-WVd7/pub?gid=0&single=true&output=csv';
 
-    async function loadGoogleSheetData() {
-      if (!GOOGLE_SHEET_CSV_URL || GOOGLE_SHEET_CSV_URL === 'YOUR_GOOGLE_SHEET_CSV_URL') {
-        document.getElementById('syncStatus').innerText = '※ 구글 시트 URL 미설정 (수동 입력 모드)';
-        calculate();
-        return;
-      }
+    function parseNumber(val, defaultVal) {
+      if (!val) return defaultVal;
+      const cleanVal = parseFloat(val.toString().replace(/,/g, '').trim());
+      return isNaN(cleanVal) ? defaultVal : cleanVal;
+    }
 
+    async function loadGoogleSheetData() {
       try {
         document.getElementById('syncStatus').innerText = '구글 시트 연동 중...';
         const response = await fetch(GOOGLE_SHEET_CSV_URL);
         const data = await response.text();
         const rows = data.split('\n').map(row => row.split(','));
 
-        // 시트의 A1~D1 또는 첫 행/열 구조에 따라 자동 대입
-        // 구글 시트 1행에 QQQ, MA250, VIX10, High52 순서로 수치가 기재되어 있는 기준
-        if (rows.length > 0) {
-          const firstRow = rows[0];
-          if(firstRow[0]) document.getElementById('price').value = parseFloat(firstRow[0]).toFixed(2);
-          if(firstRow[1]) document.getElementById('ma250').value = parseFloat(firstRow[1]).toFixed(2);
-          if(firstRow[2]) document.getElementById('vix10').value = parseFloat(firstRow[2]).toFixed(2);
-          if(firstRow[3]) document.getElementById('high52').value = parseFloat(firstRow[3]).toFixed(2);
+        // 세로 배치 데이터 파싱 (1행: QQQ, 2행: 250일선, 3행: VIX, 4행: 52주 최고가)
+        if (rows.length >= 4) {
+          if (rows[0] && rows[0][0]) document.getElementById('price').value = parseNumber(rows[0][0], 718.96);
+          if (rows[1] && rows[1][0]) document.getElementById('ma250').value = parseNumber(rows[1][0], 644.57);
+          if (rows[2] && rows[2][0]) document.getElementById('vix10').value = parseNumber(rows[2][0], 15.27);
+          if (rows[3] && rows[3][0]) document.getElementById('high52').value = parseNumber(rows[3][0], 748.63);
         }
 
         document.getElementById('syncStatus').innerText = '최신 구글 시트 동기화 완료';
@@ -166,6 +161,7 @@
 
       const maHigh = ma250 * 1.01;
       const maLow = ma250 * 0.95;
+      
       const dropRate = high52 > 0 ? ((price - high52) / high52) : 0;
 
       document.getElementById('maHigh').innerText = maHigh.toFixed(2);
