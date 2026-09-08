@@ -125,8 +125,8 @@
     const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTEFLZAFwZsv5s0lsWecsNRJUqKkLYGbLZnAFJPtv0KDN7NB_ErkAzjen7MzdKhw0hGdio5dh9-WVd7/pub?gid=0&single=true&output=csv';
 
     function parseNumber(val, defaultVal) {
-      if (!val) return defaultVal;
-      const cleanVal = parseFloat(val.toString().replace(/,/g, '').trim());
+      if (val === undefined || val === null) return defaultVal;
+      const cleanVal = parseFloat(val.toString().replace(/[^0-9.-]/g, '').trim());
       return isNaN(cleanVal) ? defaultVal : cleanVal;
     }
 
@@ -135,14 +135,20 @@
         document.getElementById('syncStatus').innerText = '구글 시트 연동 중...';
         const response = await fetch(GOOGLE_SHEET_CSV_URL);
         const data = await response.text();
-        const rows = data.split('\n').map(row => row.split(','));
+        
+        // 줄바꿈 정제 및 배열화
+        const cleanRows = data.replace(/\r/g, '').split('\n').filter(r => r.trim() !== '');
 
-        // 세로 배치 데이터 파싱 (1행: QQQ, 2행: 250일선, 3행: VIX, 4행: 52주 최고가)
-        if (rows.length >= 4) {
-          if (rows[0] && rows[0][0]) document.getElementById('price').value = parseNumber(rows[0][0], 718.96);
-          if (rows[1] && rows[1][0]) document.getElementById('ma250').value = parseNumber(rows[1][0], 644.57);
-          if (rows[2] && rows[2][0]) document.getElementById('vix10').value = parseNumber(rows[2][0], 15.27);
-          if (rows[3] && rows[3][0]) document.getElementById('high52').value = parseNumber(rows[3][0], 748.63);
+        if (cleanRows.length >= 4) {
+          const val0 = cleanRows[0].split(',')[0];
+          const val1 = cleanRows[1].split(',')[0];
+          const val2 = cleanRows[2].split(',')[0];
+          const val3 = cleanRows[3].split(',')[0];
+
+          document.getElementById('price').value = parseNumber(val0, 718.96);
+          document.getElementById('ma250').value = parseNumber(val1, 644.57);
+          document.getElementById('vix10').value = parseNumber(val2, 15.27);
+          document.getElementById('high52').value = parseNumber(val3, 748.63);
         }
 
         document.getElementById('syncStatus').innerText = '최신 구글 시트 동기화 완료';
