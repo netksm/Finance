@@ -87,11 +87,11 @@
     </div>
     <div class="card">
       <label>VIX 10일 평균</label>
-      <input type="number" id="vix10" value="15.27" step="0.01" oninput="calculate()">
+      <input type="number" id="vix10" value="15.08" step="0.01" oninput="calculate()">
     </div>
     <div class="card">
       <label>52주 최고가</label>
-      <input type="number" id="high52" value="748.63" step="0.01" oninput="calculate()">
+      <input type="number" id="high52" value="748.65" step="0.01" oninput="calculate()">
     </div>
   </div>
 
@@ -124,35 +124,51 @@
   <script>
     const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTEFLZAFwZsv5s0lsWecsNRJUqKkLYGbLZnAFJPtv0KDN7NB_ErkAzjen7MzdKhw0hGdio5dh9-WVd7/pub?gid=0&single=true&output=csv';
 
-    function parseNumber(val, defaultVal) {
-      if (val === undefined || val === null) return defaultVal;
-      const strVal = val.toString().trim();
-      if (strVal.includes('#') || strVal === '') return defaultVal;
-      
-      const cleanVal = parseFloat(strVal.replace(/[^0-9.-]/g, ''));
-      return isNaN(cleanVal) ? defaultVal : cleanVal;
+    function parseCleanNumber(valStr) {
+      if (!valStr) return null;
+      // 순수 숫자, 소수점, 마이너스 부호만 추출
+      const match = valStr.replace(/,/g, '').match(/-?\d+(\.\d+)?/);
+      return match ? parseFloat(match[0]) : null;
     }
 
     async function loadGoogleSheetData() {
       try {
         document.getElementById('syncStatus').innerText = '구글 시트 연동 중...';
         const response = await fetch(GOOGLE_SHEET_CSV_URL);
-        const data = await response.text();
+        const csvText = await response.text();
         
-        const cleanRows = data.replace(/\r/g, '').split('\n').filter(r => r.trim() !== '');
+        const lines = csvText.replace(/\r/g, '').split('\n');
 
-        // 이미지 속 실제 구글 시트 행 구조에 맞춤 (인덱스는 0부터 시작)
-        if (cleanRows.length >= 8) {
-          const valPrice = cleanRows[1].split(',')[1] || cleanRows[1].split(',')[0]; // 2행: 현재 지수
-          const valMa250 = cleanRows[2].split(',')[1] || cleanRows[2].split(',')[0]; // 3행: 250일 이동평균선
-          const valVix10 = cleanRows[6].split(',')[1] || cleanRows[6].split(',')[0]; // 7행: VIX 10일 평균
-          const valHigh52 = cleanRows[7].split(',')[1] || cleanRows[7].split(',')[0]; // 8행: 52주 최고가
+        let extractedPrice = null;
+        let extractedMa250 = null;
+        let extractedVix10 = null;
+        let extractedHigh52 = null;
 
-          document.getElementById('price').value = parseNumber(valPrice, 718.96);
-          document.getElementById('ma250').value = parseNumber(valMa250, 644.57);
-          document.getElementById('vix10').value = parseNumber(valVix10, 15.27);
-          document.getElementById('high52').value = parseNumber(valHigh52, 748.63);
-        }
+        // 라벨 키워드로 탐색 (인덱스 밀림 방지)
+        lines.forEach(line => {
+          const cols = line.split(',');
+          const rowText = cols.join(' ');
+
+          // 행에 들어있는 숫자값 찾기
+          let numVal = null;
+          for (let i = 1; i < cols.length; i++) {
+            const parsed = parseCleanNumber(cols[i]);
+            if (parsed !== null) {
+              numVal = parsed;
+              break;
+            }
+          }
+
+          if (rowText.includes('현재 지수') && numVal !== null) extractedPrice = numVal;
+          if (rowText.includes('250일 이동평균선') && numVal !== null) extractedMa250 = numVal;
+          if (rowText.includes('VIX 10일 평균') && numVal !== null) extractedVix10 = numVal;
+          if (rowText.includes('52주 최고가') && numVal !== null) extractedHigh52 = numVal;
+        });
+
+        if (extractedPrice !== null) document.getElementById('price').value = extractedPrice;
+        if (extractedMa250 !== null) document.getElementById('ma250').value = extractedMa250;
+        if (extractedVix10 !== null) document.getElementById('vix10').value = extractedVix10;
+        if (extractedHigh52 !== null) document.getElementById('high52').value = extractedHigh52;
 
         document.getElementById('syncStatus').innerText = '최신 구글 시트 동기화 완료';
         calculate();
