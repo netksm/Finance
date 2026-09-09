@@ -124,12 +124,21 @@
   <script>
     const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTEFLZAFwZsv5s0lsWecsNRJUqKkLYGbLZnAFJPtv0KDN7NB_ErkAzjen7MzdKhw0hGdio5dh9-WVd7/pub?gid=0&single=true&output=csv';
 
-    function parseCleanNumber(valStr) {
-      if (!valStr) return null;
-      const str = valStr.toString().trim();
-      if (str.includes('#') || str === '') return null;
-      const clean = parseFloat(str.replace(/,/g, '').replace(/[^0-9.-]/g, ''));
-      return isNaN(clean) ? null : clean;
+    // CSV 한 줄에서 '마지막 컬럼'의 실수(Float) 데이터만 정확히 파싱하는 함수
+    function extractValueFromLine(line) {
+      if (!line) return null;
+      // 큰따옴표 제거 및 콤마 분할
+      const cols = line.replace(/"/g, '').split(',').map(c => c.trim());
+      
+      // 맨 뒤 컬럼부터 역순 탐색하여 순수 숫자를 추출
+      for (let i = cols.length - 1; i >= 0; i--) {
+        const str = cols[i];
+        if (str.includes('#') || str === '') continue;
+        
+        const clean = parseFloat(str.replace(/,/g, '').replace(/[^0-9.-]/g, ''));
+        if (!isNaN(clean)) return clean;
+      }
+      return null;
     }
 
     async function loadGoogleSheetData() {
@@ -141,26 +150,21 @@
         const lines = csvText.replace(/\r/g, '').split('\n');
 
         lines.forEach(line => {
-          const cols = line.split(',').map(c => c.trim());
-          if (cols.length < 2) return;
+          if (!line.trim()) return;
 
-          const label = cols[0] || cols[1] || '';
-          
-          // 라벨이 포함된 셀 바로 오른쪽 셀의 숫자만 정확히 추출
-          let targetVal = null;
-          for (let i = 1; i < cols.length; i++) {
-            const num = parseCleanNumber(cols[i]);
-            if (num !== null) {
-              targetVal = num;
-              break;
-            }
-          }
-
-          if (targetVal !== null) {
-            if (label.includes('현재 지수')) document.getElementById('price').value = targetVal;
-            else if (label.includes('250일 이동평균선')) document.getElementById('ma250').value = targetVal;
-            else if (label.includes('VIX 10일 평균')) document.getElementById('vix10').value = targetVal;
-            else if (label.includes('52주 최고가')) document.getElementById('high52').value = targetVal;
+          // 구글 시트 A열 텍스트 라벨 기준으로 검증
+          if (line.includes('현재 지수')) {
+            const val = extractValueFromLine(line);
+            if (val !== null) document.getElementById('price').value = val;
+          } else if (line.includes('250일 이동평균선') && !line.includes('+1%') && !line.includes('-5%')) {
+            const val = extractValueFromLine(line);
+            if (val !== null) document.getElementById('ma250').value = val;
+          } else if (line.includes('VIX 10일 평균') || line.includes('VIX 10일선')) {
+            const val = extractValueFromLine(line);
+            if (val !== null) document.getElementById('vix10').value = val;
+          } else if (line.includes('52주 최고가')) {
+            const val = extractValueFromLine(line);
+            if (val !== null) document.getElementById('high52').value = val;
           }
         });
 
