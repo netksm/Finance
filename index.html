@@ -79,7 +79,7 @@
   <div class="grid-container">
     <div class="card">
       <label>현재 지수 (QQQ)</label>
-      <input type="number" id="price" value="718.96" step="0.01" oninput="calculate()">
+      <input type="number" id="price" value="718.36" step="0.01" oninput="calculate()">
     </div>
     <div class="card">
       <label>250일 이동평균선</label>
@@ -126,9 +126,10 @@
 
     function parseCleanNumber(valStr) {
       if (!valStr) return null;
-      // 순수 숫자, 소수점, 마이너스 부호만 추출
-      const match = valStr.replace(/,/g, '').match(/-?\d+(\.\d+)?/);
-      return match ? parseFloat(match[0]) : null;
+      const str = valStr.toString().trim();
+      if (str.includes('#') || str === '') return null;
+      const clean = parseFloat(str.replace(/,/g, '').replace(/[^0-9.-]/g, ''));
+      return isNaN(clean) ? null : clean;
     }
 
     async function loadGoogleSheetData() {
@@ -139,36 +140,29 @@
         
         const lines = csvText.replace(/\r/g, '').split('\n');
 
-        let extractedPrice = null;
-        let extractedMa250 = null;
-        let extractedVix10 = null;
-        let extractedHigh52 = null;
-
-        // 라벨 키워드로 탐색 (인덱스 밀림 방지)
         lines.forEach(line => {
-          const cols = line.split(',');
-          const rowText = cols.join(' ');
+          const cols = line.split(',').map(c => c.trim());
+          if (cols.length < 2) return;
 
-          // 행에 들어있는 숫자값 찾기
-          let numVal = null;
+          const label = cols[0] || cols[1] || '';
+          
+          // 라벨이 포함된 셀 바로 오른쪽 셀의 숫자만 정확히 추출
+          let targetVal = null;
           for (let i = 1; i < cols.length; i++) {
-            const parsed = parseCleanNumber(cols[i]);
-            if (parsed !== null) {
-              numVal = parsed;
+            const num = parseCleanNumber(cols[i]);
+            if (num !== null) {
+              targetVal = num;
               break;
             }
           }
 
-          if (rowText.includes('현재 지수') && numVal !== null) extractedPrice = numVal;
-          if (rowText.includes('250일 이동평균선') && numVal !== null) extractedMa250 = numVal;
-          if (rowText.includes('VIX 10일 평균') && numVal !== null) extractedVix10 = numVal;
-          if (rowText.includes('52주 최고가') && numVal !== null) extractedHigh52 = numVal;
+          if (targetVal !== null) {
+            if (label.includes('현재 지수')) document.getElementById('price').value = targetVal;
+            else if (label.includes('250일 이동평균선')) document.getElementById('ma250').value = targetVal;
+            else if (label.includes('VIX 10일 평균')) document.getElementById('vix10').value = targetVal;
+            else if (label.includes('52주 최고가')) document.getElementById('high52').value = targetVal;
+          }
         });
-
-        if (extractedPrice !== null) document.getElementById('price').value = extractedPrice;
-        if (extractedMa250 !== null) document.getElementById('ma250').value = extractedMa250;
-        if (extractedVix10 !== null) document.getElementById('vix10').value = extractedVix10;
-        if (extractedHigh52 !== null) document.getElementById('high52').value = extractedHigh52;
 
         document.getElementById('syncStatus').innerText = '최신 구글 시트 동기화 완료';
         calculate();
